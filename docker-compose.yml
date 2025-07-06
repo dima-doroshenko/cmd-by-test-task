@@ -1,0 +1,34 @@
+services:
+
+  db:
+    image: postgres:latest
+    container_name: cmd-by-db
+    env_file:
+      - .env
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - net
+
+  app:
+    container_name: cmd-by-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_started
+    networks:
+      - net
+
+volumes:
+  pg_data: {}
+
+networks:
+  net:
+    driver: bridge
+    name: net
