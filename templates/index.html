@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetWeather</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌤️ GetWeather</h1>
+            <p>Узнайте погоду в любом городе</p>
+        </div>
+        
+        <div class="content">
+            <div class="search-form">
+                <input type="text" id="cityInput" class="search-input" placeholder="Введите название города..." value="Минск">
+                <button onclick="getWeather()" class="search-button">Получить погоду</button>
+            </div>
+            
+            <div id="error" class="error"></div>
+            
+            <div id="weatherCard" class="weather-card">
+                <h2 id="weatherCity"></h2>
+                <div class="weather-info">
+                    <div class="weather-item">
+                        <div class="weather-value" id="temperature"></div>
+                        <div class="weather-label">Температура (°C)</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-value" id="humidity"></div>
+                        <div class="weather-label">Влажность (%)</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-value" id="pressure"></div>
+                        <div class="weather-label">Давление (мм рт.ст.)</div>
+                    </div>
+                    <div class="weather-item">
+                        <div class="weather-value" id="description"></div>
+                        <div class="weather-label">Описание</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="history-section">
+                <div class="history-header">
+                    <h3>📋 История запросов</h3>
+                    <div class="history-info" id="historyInfo"></div>
+                </div>
+                <div id="historyList"></div>
+                <div class="pagination" id="pagination">
+                    <button onclick="changePage(-1)" id="prevBtn">← Предыдущая</button>
+                    <span class="pagination-info" id="pageInfo"></span>
+                    <button onclick="changePage(1)" id="nextBtn">Следующая →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1/weather';
+        let currentPage = 1;
+        let pageSize = 10;
+        let totalPages = 1;
+        let totalItems = 0;
+        
+        async function getWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const city = cityInput.value.trim();
+            
+            if (!city) {
+                showError('Пожалуйста, введите название города');
+                return;
+            }
+            
+            try {
+                showError('');
+                showLoading(true);
+                
+                const response = await fetch(`${API_BASE}/${encodeURIComponent(city)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                
+                const weatherData = await response.json();
+                displayWeather(city, weatherData);
+                loadHistory(1);
+                
+            } catch (error) {
+                showError(`Ошибка при получении погоды: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function displayWeather(city, data) {
+            document.getElementById('weatherCity').textContent = city;
+            document.getElementById('temperature').textContent = `${data.temp}°C`;
+            document.getElementById('humidity').textContent = `${data.humidity}%`;
+            document.getElementById('pressure').textContent = data.pressure;
+            document.getElementById('description').textContent = data.description;
+            document.getElementById('weatherCard').style.display = 'block';
+        }
+        
+        async function loadHistory(page = 1) {
+            try {
+                const response = await fetch(`${API_BASE}/history?page=${page}&size=${pageSize}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Ошибка: ${response.status}`);
+                }
+                
+                const historyData = await response.json();
+                displayHistory(historyData);
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке истории:', error);
+                showError(`Ошибка при загрузке истории: ${error.message}`);
+            }
+        }
+        
+        function displayHistory(data) {
+            const { items, total_items, total_pages, page, size } = data;
+            
+            currentPage = page;
+            totalPages = total_pages;
+            totalItems = total_items;
+            pageSize = size;
+            
+            const historyList = document.getElementById('historyList');
+            const historyInfo = document.getElementById('historyInfo');
+            const pageInfo = document.getElementById('pageInfo');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            historyInfo.textContent = `Всего записей: ${totalItems}`;
+            pageInfo.textContent = `Страница ${currentPage} из ${totalPages}`;
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+            
+            if (items.length === 0) {
+                historyList.innerHTML = '<p class="loading">История запросов пуста</p>';
+                return;
+            }
+            
+            historyList.innerHTML = items.map(item => `
+                <div class="history-item">
+                    <div class="history-city">${item.city}</div>
+                    <div class="history-time">${new Date(item.created_at).toLocaleString('ru-RU')}</div>
+                    <div>Температура: ${item.data.temp}°C, Влажность: ${item.data.humidity}%, ${item.data.description}</div>
+                </div>
+            `).join('');
+        }
+        
+        function changePage(delta) {
+            const newPage = currentPage + delta;
+            if (newPage >= 1 && newPage <= totalPages) {
+                loadHistory(newPage);
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = message ? 'block' : 'none';
+        }
+        
+        function showLoading(show) {
+            const button = document.querySelector('.search-button');
+            button.textContent = show ? 'Загрузка...' : 'Получить погоду';
+            button.disabled = show;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadHistory(1);
+        });
+        
+        document.getElementById('cityInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                getWeather();
+            }
+        });
+    </script>
+</body>
+</html> 
