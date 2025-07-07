@@ -25,7 +25,7 @@ async def get_weather_request_records(
 
 @router.get(
     "/{city}",
-    responses=BadResponses(400),
+    responses=BadResponses(400, 404),
 )
 async def get_weather_by_city(
     city: str,
