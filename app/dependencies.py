@@ -8,6 +8,7 @@ from app.core.database import SessionLocal
 def get_aiohttp_session(request: Request) -> aiohttp.ClientSession:
     return request.app.state.aiohttp_session
 
+
 async def get_session():
     async with SessionLocal() as session:
         try:

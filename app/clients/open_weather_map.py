@@ -22,7 +22,6 @@ class OpenWeatherMapClient:
 
     async def _make_request(self, url: str, **params: Any):
         url = urljoin(settings.weather_api.base_url, url)
-        params = params.copy()
         params["appid"] = settings.weather_api.api_key
         data = await make_request(
             url=url,

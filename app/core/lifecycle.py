@@ -24,4 +24,3 @@ class Lifecycle:
                 await self.aiohttp_session.close()
         except:
             ...
-    

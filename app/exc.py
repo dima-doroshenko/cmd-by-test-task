@@ -1,8 +1,6 @@
 from typing import Literal
 
-from fastapi import HTTPException
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class HTTPExceptionModel(BaseModel):
