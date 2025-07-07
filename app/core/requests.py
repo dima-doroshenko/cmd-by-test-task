@@ -21,10 +21,7 @@ async def make_request(
             headers=headers,
             ssl=ssl,
         ) as response:
-            data = await response.json()
             response.raise_for_status()
-            return data
+            return await response.json()
     except aiohttp.ClientError:
-        return None
-    finally:
-        print(f'{response.url=}\n{data=}')
+        return

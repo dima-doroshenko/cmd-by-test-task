@@ -1,10 +1,13 @@
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 
 from pydantic_settings import BaseSettings
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 load_dotenv()
+
+BASEDIR = Path(__file__).resolve().absolute().parent.parent
 
 
 class DB(BaseModel):
@@ -27,9 +30,19 @@ class WeatherAPI(BaseModel):
     base_url: str = os.getenv("OPEN_WEATHER_MAP_BASE_URL")
 
 
+class Timezone(BaseModel):
+    delta: float = os.getenv("TIMEZONE_DELTA")
+
+    @model_validator(mode="after")
+    def validate_model(self):
+        self.delta = float(self.delta)
+        return self
+
+
 class Settings(BaseSettings):
     db: DB = DB()
     weather_api: WeatherAPI = WeatherAPI()
+    tz: Timezone = Timezone()
 
 
 settings = Settings()

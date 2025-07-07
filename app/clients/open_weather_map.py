@@ -35,17 +35,21 @@ class OpenWeatherMapClient:
 
     async def get_coordinates_by_city(self, city: str) -> _Coordinates:
         data = await self._make_request("geo/1.0/direct", q=city)
+        if not len(data):
+            raise HTTPException(status_code=404, detail="City not found")
         return _Coordinates(data[0]["lat"], data[0]["lon"])
 
-    async def get_weather_by_coordinates(self, coordinates: _Coordinates) -> WeatherInfoSchema:
+    async def get_weather_by_coordinates(
+        self, coordinates: _Coordinates
+    ) -> WeatherInfoSchema:
         data = await self._make_request(
-            "data/3.0/onecall", lat=coordinates.lat, lon=coordinates.lon
+            "data/2.5/weather", lat=coordinates.lat, lon=coordinates.lon
         )
         return WeatherInfoSchema(
-            temp=data["current"]["temp"] - 273.15,
-            humidity=data["current"]["humidity"],
-            pressure=data["current"]["pressure"],
-            description=data["current"]["weather"]["description"],
+            temp=data["main"]["temp"] - 273.15,
+            humidity=data["main"]["humidity"],
+            pressure=data["main"]["pressure"],
+            description=data["weather"][0]["description"].capitalize(),
         )
 
     async def get_weather_by_city(self, city: str) -> WeatherInfoSchema:

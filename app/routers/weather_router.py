@@ -33,4 +33,4 @@ async def get_weather_by_city(
     aiohttp_session: aiohttp.ClientSession = Depends(get_aiohttp_session),
 ) -> WeatherInfoSchema:
     weather_service = WeatherService(session=session, aiohttp_session=aiohttp_session)
-    return await weather_service.get_weather(city=city)
+    return await weather_service.get_weather(city=city.capitalize())
