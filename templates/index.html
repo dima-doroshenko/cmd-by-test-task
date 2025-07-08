@@ -79,7 +79,7 @@
                 showError('');
                 showLoading(true);
                 
-                const response = await fetch(`${API_BASE}/${encodeURIComponent(city)}`);
+                const response = await fetch(`${API_BASE}/city/${encodeURIComponent(city)}`);
                 
                 if (!response.ok) {
                     throw new Error(`Ошибка: ${response.status}`);
